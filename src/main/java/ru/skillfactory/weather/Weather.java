@@ -17,37 +17,109 @@ public class Weather {
 
         scanner.useLocale(Locale.US);
 
-        Float lat = setParams("Укажи пожалуйста широту в DD: ");
-        Float lon = setParams("Укажи пожалуйста долготу в DD: ");
+        String lat = setParams("Укажи пожалуйста широту в DD: ", false);
+        String lon = setParams("Укажи пожалуйста долготу в DD: ", false);
+        String limit = setParams(
+                "Можешь указать на сколько дней тебе нужен прогноз или нажать Enter для пропуска",
+                true
+        );
 
         System.out.println("Сейчас будет выполнен запрос по твоим координатам, lat: " + lat + " " + "lon: " + lon);
 
+        JsonNode response = client.getRequest(this.generateUrl(lat, lon, limit), this.getHeaders());
+
+        Number temp = response.path("fact").path("temp").asInt();
+        String averageTemperature = getAverageTemperature(response, limit);
+
+        System.out.println("Полная информация о погоде: " + response);
+        System.out.println("Текущая температура: " + temp);
+
+        if (averageTemperature != null) {
+            System.out.println("Средняя температура по прогнозу: " + averageTemperature);
+        }
+    }
+
+    private String generateUrl(String lat, String lon, String limit) {
         String baseUrl = "https://api.weather.yandex.ru/v2/forecast";
         String queryString = String.format("?lat=%s&lon=%s",
                 URLEncoder.encode(String.valueOf(lat), StandardCharsets.UTF_8),
                 URLEncoder.encode(String.valueOf(lon), StandardCharsets.UTF_8)
         );
 
-        String uri = URI.create(baseUrl + queryString).toString();
-        String token = "1833f2e2-ae08-4df1-958a-3355b7410979";
-        String[] headers = {"X-Yandex-Weather-Key", token};
-
-
-        JsonNode response = client.getRequest(uri, headers);
-
-        System.out.println(response);
-    }
-
-    private Float setParams(String message) {
-        System.out.println(message);
-
-        while (!scanner.hasNextFloat()) {
-            System.out.println("Ты ввел что-то не то... давай попробуем еще раз");
-            scanner.next();
+        if (!limit.isEmpty()) {
+            queryString += "&limit=" + URLEncoder.encode(limit, StandardCharsets.UTF_8);
         }
 
+        return URI.create(baseUrl + queryString).toString();
+    }
+
+    private String getAverageTemperature(JsonNode response, String limit) {
+        if (limit.isEmpty()) {
+            return null;
+        }
+
+        JsonNode forecasts = response.path("forecasts");
+        int daysCount = Math.min(Integer.parseInt(limit), forecasts.size());
+        int temperatureSum = 0;
+
+        for (int i = 0; i < daysCount; i++) {
+            temperatureSum += forecasts.get(i).path("parts").path("day").path("temp_avg").asInt();
+        }
+
+        Double answer = (double) temperatureSum / daysCount;
+
+        return String.format(Locale.US,"%.2f", answer);
+    }
+
+    private String[] getHeaders() {
+        String token = "1833f2e2-ae08-4df1-958a-3355b7410979";
+
+        return new String[]{"X-Yandex-Weather-Key", token};
+    }
+
+    private String setParams(String message, Boolean isOption) {
+        System.out.println(message);
+
+        String params = scanner.nextLine().trim();
+
+        if (isOption && params.isEmpty()) {
+            System.out.println("Пропускаем этот параметр.");
+            return params;
+        }
+
+        while (isOption && !isPositiveInteger(params)) {
+            System.out.println("Ты ввел что-то не то... нужно положительное целое число или пустая строка, чтобы пропустить");
+            params = scanner.nextLine().trim();
+
+            if (params.isEmpty()) {
+                System.out.println("Пропускаем этот параметр.");
+                return params;
+            }
+        }
+
+        while (!isOption && !isDouble(params)) {
+            System.out.println("Ты ввел что-то не то... давай попробуем еще раз");
+            params = scanner.nextLine().trim();
+        }
 
         System.out.println("Отлично все правильно! Давай дальше!");
-        return scanner.nextFloat();
+        return params;
+    }
+
+    private boolean isPositiveInteger(String value) {
+        try {
+            return Integer.parseInt(value) > 0;
+        } catch (NumberFormatException exception) {
+            return false;
+        }
+    }
+
+    private boolean isDouble(String value) {
+        try {
+            Double.parseDouble(value);
+            return true;
+        } catch (NumberFormatException exception) {
+            return false;
+        }
     }
 }
