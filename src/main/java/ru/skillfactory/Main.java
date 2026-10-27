@@ -1,11 +1,12 @@
 package ru.skillfactory;
 
-import ru.skillfactory.calculate.Calculate;
+
+import ru.skillfactory.weather.Weather;
 
 public class Main {
     public static void main(String[] args) {
-        Calculate calculate = new Calculate();
+        Weather weather = new Weather();
 
-        calculate.run();
+        weather.run();
     }
 }
