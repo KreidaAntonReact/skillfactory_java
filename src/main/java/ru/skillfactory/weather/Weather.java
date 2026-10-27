@@ -11,23 +11,31 @@ import java.util.Scanner;
 public class Weather {
     private final Scanner scanner = new Scanner(System.in);
     private final Client client = new Client();
+    private String lat;
+    private String lon;
+    private String limit;
+    private JsonNode response;
 
     public void run() {
         System.out.println("Привет! Прежде чем наченм давай сначала введем некоторые параметры.");
 
         scanner.useLocale(Locale.US);
 
-        String lat = this.setParams("Укажи пожалуйста широту в DD: ", false);
-        String lon = this.setParams("Укажи пожалуйста долготу в DD: ", false);
-        String limit = this.setParams(
+        lat = this.setParams("Укажи пожалуйста широту в DD: ", false);
+        lon = this.setParams("Укажи пожалуйста долготу в DD: ", false);
+        limit = this.setParams(
                 "Можешь указать на сколько дней тебе нужен прогноз или нажать Enter для пропуска",
                 true
         );
 
-        System.out.println("Сейчас будет выполнен запрос по твоим координатам, lat: " + lat + " " + "lon: " + lon);
+        System.out.println(this.getParamsMessage());
 
-        JsonNode response = client.getRequest(this.generateUrl(lat, lon, limit), this.getHeaders());
+        response = client.getRequest(this.generateUrl(lat, lon, limit), this.getHeaders());
 
+        this.showResponseMessage();
+    }
+
+    private void showResponseMessage() {
         Number temp = response.path("fact").path("temp").asInt();
         String averageTemperature = this.getAverageTemperature(response, limit);
 
@@ -39,6 +47,16 @@ public class Weather {
         }
     }
 
+    private String getParamsMessage() {
+        String paramsMessage = String.format("Сейчас будет выполнен запрос по твоим координатам, lat: %s lon: %s", lat, lon);
+
+        if(!limit.isEmpty()) {
+            paramsMessage = String.format(paramsMessage + " и прогноз на %s дней", limit);
+        }
+
+        return paramsMessage;
+    }
+
     private String generateUrl(String lat, String lon, String limit) {
         String baseUrl = "https://api.weather.yandex.ru/v2/forecast";
         String queryString = String.format("?lat=%s&lon=%s",
@@ -47,7 +65,7 @@ public class Weather {
         );
 
         if (!limit.isEmpty()) {
-            queryString = String.format("&limit=%s", URLEncoder.encode(limit, StandardCharsets.UTF_8));
+            queryString += String.format("&limit=%s", URLEncoder.encode(limit, StandardCharsets.UTF_8));
         }
 
         return URI.create(baseUrl + queryString).toString();
