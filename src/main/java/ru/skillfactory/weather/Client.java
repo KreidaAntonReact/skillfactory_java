@@ -14,7 +14,7 @@ public class Client {
     private final ObjectMapper mapper = new ObjectMapper();
     private final HttpClient client = HttpClient.newHttpClient();
 
-    public JsonNode getRequest(String uri, String... headers) {
+    public JsonNode getRequest(String uri, String[] headers) {
         HttpRequest request = this.buildGetRequest(uri, headers);
         String responseBody = null;
 
@@ -27,7 +27,7 @@ public class Client {
         return this.getJson(responseBody);
     }
 
-    private HttpRequest buildGetRequest(String uri, String... headers) {
+    private HttpRequest buildGetRequest(String uri, String[] headers) {
         return HttpRequest.newBuilder().uri(URI.create(uri)).headers(headers).GET().build();
     }
 

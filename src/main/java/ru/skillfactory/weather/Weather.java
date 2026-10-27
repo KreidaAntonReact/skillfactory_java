@@ -17,9 +17,9 @@ public class Weather {
 
         scanner.useLocale(Locale.US);
 
-        String lat = setParams("Укажи пожалуйста широту в DD: ", false);
-        String lon = setParams("Укажи пожалуйста долготу в DD: ", false);
-        String limit = setParams(
+        String lat = this.setParams("Укажи пожалуйста широту в DD: ", false);
+        String lon = this.setParams("Укажи пожалуйста долготу в DD: ", false);
+        String limit = this.setParams(
                 "Можешь указать на сколько дней тебе нужен прогноз или нажать Enter для пропуска",
                 true
         );
@@ -29,7 +29,7 @@ public class Weather {
         JsonNode response = client.getRequest(this.generateUrl(lat, lon, limit), this.getHeaders());
 
         Number temp = response.path("fact").path("temp").asInt();
-        String averageTemperature = getAverageTemperature(response, limit);
+        String averageTemperature = this.getAverageTemperature(response, limit);
 
         System.out.println("Полная информация о погоде: " + response);
         System.out.println("Текущая температура: " + temp);
