@@ -47,7 +47,7 @@ public class Weather {
         );
 
         if (!limit.isEmpty()) {
-            queryString += "&limit=" + URLEncoder.encode(limit, StandardCharsets.UTF_8);
+            queryString = String.format("&limit=%s", URLEncoder.encode(limit, StandardCharsets.UTF_8));
         }
 
         return URI.create(baseUrl + queryString).toString();
